@@ -15,7 +15,7 @@ class CleanFieldsModel(Model):
 
     def save(self, *args, **kwargs):
         """Call registered field cleaner methods before saving."""
-        field_names = self._meta.get_all_field_names()
+        field_names = [field.name for field in self._meta.get_fields()]
         for field_name in field_names:
             field_cleaner = getattr(self, 'clean_{}'.format(field_name), None)
             if field_cleaner and callable(field_cleaner):
