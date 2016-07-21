@@ -1,7 +1,7 @@
 # django_clean_fields
 This Django app enables the definition of methods that will scrub a model object's field values before committing them to the database, without having to override the `save` method. For instance, in the example below, all Article titles are coerced into a predictable format. This happens automatically on save, without having to invoke `clean_title` directly.
 
-```
+```python
 from django.core.exceptions import ValidationError
 from django.db import models
 from clean_fields.models import NaiveCleanFieldsModel
