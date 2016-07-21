@@ -24,16 +24,19 @@ There is solid reasoning behind the omission of similar behavior in Django's cor
 If in doubt, it's worth noting some built-in alternative means to accomplish similar cleaning behavior. For instance:
 
 1. The forms API
-[Django form-field validation](https://docs.djangoproject.com/en/dev/ref/forms/validation/) allows cleaning both specific values or the entirety of a submitted form. Used with a [ModelForm](https://docs.djangoproject.com/en/dev/topics/forms/modelforms/#modelform), this is the best way to scrub data delivered via the user interface.
 
-However, forms and their validation are intended to be used within the context of a web page. They loose much of their simplicity when handled entirely on the backend.
+    [Django form-field validation](https://docs.djangoproject.com/en/dev/ref/forms/validation/) allows cleaning both specific values or the entirety of a submitted form. Used with a [ModelForm](https://docs.djangoproject.com/en/dev/topics/forms/modelforms/#modelform), this is the best way to scrub data delivered via the user interface.
+
+    However, forms and their validation are intended to be used within the context of a web page. They loose much of their simplicity when handled entirely on the backend.
 
 2. Model field constraints and validators
-Model fields provide two ways avoid committing erroneous values to the database. The first are [field options](https://docs.djangoproject.com/en/def/ref/models/fields/#field-options); passed as keyword arguments to your fields declarations, these will enforce value contraints on the database level (eg. CharField's max_length). The second is the ability to define [validators](https://docs.djangoproject.com/en/dev/ref/validators/#module-django.core.validators). These functions, more flexible in Python than at the database level, will raise errors if the values to be saved to not adhere to some defined pattern or convention.
 
-While both these options keep the validation at the model level, their benefit is merely error prevention. Neither allow the ability to "massage" data into an acceptable format.
+    Model fields provide two ways avoid committing erroneous values to the database. The first are [field options](https://docs.djangoproject.com/en/def/ref/models/fields/#field-options); passed as keyword arguments to your fields declarations, these will enforce value contraints on the database level (eg. CharField's max_length). The second is the ability to define [validators](https://docs.djangoproject.com/en/dev/ref/validators/#module-django.core.validators). These functions, more flexible in Python than at the database level, will raise errors if the values to be saved to not adhere to some defined pattern or convention.
+
+    While both these options keep the validation at the model level, their benefit is merely error prevention. Neither allow the ability to "massage" data into an acceptable format.
 
 3. Signal handling
-Finally, field scrubbing can be done by [handling built-in Django signals](https://docs.djangoproject.com/en/dev/topics/signals/), specifically, the [pre-save signal](https://docs.djangoproject.com/en/dev/ref/signals/#django.db.models.signals.pre_save). This workflow is most similar to that of django-clean-fields: a callable function can be configured to receive the signal, and will therefore be invoked before any model object's call to `save`.
 
-The greatest shortcoming of this approach is that it encourages bad OO design: signal handlers of this nature would easily be defined apart from the models which they are meant to modify. Even implemented as staticmethods on the appropriate models, their method signature is obtuse, and therefore difficult to use outside of the context of signals.
+    Finally, field scrubbing can be done by [handling built-in Django signals](https://docs.djangoproject.com/en/dev/topics/signals/), specifically, the [pre-save signal](https://docs.djangoproject.com/en/dev/ref/signals/#django.db.models.signals.pre_save). This workflow is most similar to that of django-clean-fields: a callable function can be configured to receive the signal, and will therefore be invoked before any model object's call to `save`.
+
+    The greatest shortcoming of this approach is that it encourages bad OO design: signal handlers of this nature would easily be defined apart from the models which they are meant to modify. Even implemented as staticmethods on the appropriate models, their method signature is obtuse, and therefore difficult to use outside of the context of signals.
