@@ -1,6 +1,8 @@
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
+from clean_fields.exc import CleanFieldsConfigurationError
+
 
 class NoValue(object):
     """Empty class for disambiguating calls to getattr"""
@@ -25,15 +27,17 @@ def cleans_field(field_ref):
             """Run the cleaner_function on instance's field"""
             field_value = getattr(instance, field_name, NoValue)
             if field_value == NoValue:
-                # TODO: raise warning:
-                # method decorated to clean field that doesn't exist
-                pass
-            field_cleaner = getattr(instance, cleaner_function.func_name)
+                raise CleanFieldsConfigurationError(
+                    model_label,
+                    field_name,
+                    cleaner_function.__name__
+                )
+            field_cleaner = getattr(instance, cleaner_function.__name__)
             setattr(instance, field_name, field_cleaner(field_value))
 
         # To ensure the wrapped method can still be invoked, define an
         # additional function that executes the method with the given arguments
-        # and returns the result.
+        # and returns the result. This function is what the decorator returns.
         def _run_cleaner(*args, **kwargs):
             return cleaner_function(*args, **kwargs)
 
