@@ -2,6 +2,11 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
 
+class NoValue(object):
+    """Empty class for disambiguating calls to getattr"""
+    pass
+
+
 def cleans_field(field_ref):
     """Decorator to registers a field cleaning methods on the pre_save signal.
 
@@ -18,8 +23,8 @@ def cleans_field(field_ref):
         @receiver(pre_save, sender=model_label, weak=False)
         def signal_handler(sender, instance, **kwargs):
             """Run the cleaner_function on instance's field"""
-            field_value = getattr(instance, field_name, None)
-            if field_value is None:
+            field_value = getattr(instance, field_name, NoValue)
+            if field_value == NoValue:
                 # TODO: raise warning:
                 # method decorated to clean field that doesn't exist
                 pass
