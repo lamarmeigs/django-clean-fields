@@ -21,7 +21,7 @@ def cleans_field(field_ref):
 
     def _clean_wrapper(cleaner_function):
         # Register a pre-save signal handler that calls the cleaner_function
-        # on model instance, and assigns the result to the instance's field
+        # on model instance, and assigns the result to the instance's field.
         @receiver(pre_save, sender=model_label, weak=False)
         def signal_handler(sender, instance, **kwargs):
             """Run the cleaner_function on instance's field"""
