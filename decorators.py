@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
@@ -47,7 +52,10 @@ def cleans_field(field_ref):
                 try:
                     cleaned_value = cleaner_function(instance, field_value)
                 except TypeError as e:
-                    if 'takes exactly 1 argument' not in str(e):
+                    if (
+                        'takes exactly 1 argument' not in str(e) and
+                        'takes 1 positional argument' not in str(e)
+                    ):
                         raise e
                     cleaned_value = cleaner_function(field_value)
             setattr(instance, field_name, cleaned_value)
