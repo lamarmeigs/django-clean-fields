@@ -128,3 +128,20 @@ class CleansFieldUseCasesTestCase(TestCase):
         dummy = NoCleanerModel(some_field=5)
         pre_save.send(dummy.__class__, instance=dummy)
         self.assertEqual(dummy.some_field, 6)
+
+    def test_cleaner_raises_type_error(self):
+        class ErrorRaisingCleanerModel(models.Model):
+            some_field = models.IntegerField()
+            other_field = models.IntegerField()
+
+            @cleans_field('clean_fields.ErrorRaisingCleanerModel.other_field')
+            @cleans_field('clean_fields.ErrorRaisingCleanerModel.some_field')
+            def clean_some_field(self, some_field):
+                if isinstance(some_field, int):
+                    return some_field
+                raise TypeError('some_field is the wrong type')
+
+        dummy = ErrorRaisingCleanerModel(some_field=5, other_field='str')
+        with self.assertRaises(TypeError) as ctx:
+            pre_save.send(dummy.__class__, instance=dummy)
+        self.assertEqual(str(ctx.exception), 'some_field is the wrong type')

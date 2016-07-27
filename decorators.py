@@ -46,7 +46,9 @@ def cleans_field(field_ref):
             else:
                 try:
                     cleaned_value = cleaner_function(instance, field_value)
-                except TypeError:
+                except TypeError as e:
+                    if 'takes exactly 1 argument' not in str(e):
+                        raise e
                     cleaned_value = cleaner_function(field_value)
             setattr(instance, field_name, cleaned_value)
 
