@@ -39,7 +39,7 @@ class BaseCleanFieldsModel(Model):
         raise NotImplementedError()
 
 
-class NaiveCleanFieldsModel(BaseCleanFieldsModel):
+class CleanFieldsModel(BaseCleanFieldsModel):
     """An abstract model to support the use of specially-named cleaner methods.
 
     This class locates cleaner methods by name, expecting them to exist on the

@@ -3,7 +3,7 @@ from unittest import TestCase
 from django.db import models
 from mock import patch
 
-from clean_fields.models import BaseCleanFieldsModel, NaiveCleanFieldsModel
+from clean_fields.models import BaseCleanFieldsModel, CleanFieldsModel
 
 
 class BaseCleanFieldsModelTestCase(TestCase):
@@ -36,16 +36,16 @@ class BaseCleanFieldsModelTestCase(TestCase):
         self.assertEqual(dummy.some_field, 42)
 
 
-class NaiveCleanFieldsModelTestCase(TestCase):
+class CleanFieldsModelTestCase(TestCase):
     def test_get_find_cleaner_with_missing_cleaner(self):
-        class CleanerlessNaiveModel(NaiveCleanFieldsModel):
+        class CleanerlessNaiveModel(CleanFieldsModel):
             some_field = models.IntegerField()
 
         dummy = CleanerlessNaiveModel(some_field=5)
         self.assertIsNone(dummy._get_field_cleaner('some_field'))
 
     def test_get_find_cleaner_with_uncallable_cleaner(self):
-        class UncallableCleanerNaiveModel(NaiveCleanFieldsModel):
+        class UncallableCleanerNaiveModel(CleanFieldsModel):
             some_field = models.IntegerField()
             clean_some_field = 'not callable'
 
@@ -53,7 +53,7 @@ class NaiveCleanFieldsModelTestCase(TestCase):
         self.assertIsNone(dummy._get_field_cleaner('some_field'))
 
     def test_get_find_cleaner_returns_cleaner(self):
-        class CleaningNaiveModel(NaiveCleanFieldsModel):
+        class CleaningNaiveModel(CleanFieldsModel):
             some_field = models.IntegerField()
 
             def clean_some_field(self, some_field):
