@@ -25,14 +25,14 @@ class CleansFieldTestCase(TestCase):
         class BadFieldModel(models.Model):
             some_field = models.IntegerField()
 
-            @cleans_field('clean_fields.BadFieldModel.not_a_field')
+            @cleans_field('tests.BadFieldModel.not_a_field')
             def clean_some_field(self, some_field):
                 return some_field + 1
 
         dummy = BadFieldModel(some_field=5)
         with self.assertRaises(CleanFieldsConfigurationError) as ctx:
             pre_save.send(dummy.__class__, instance=dummy)
-        self.assertIn('clean_fields.BadFieldModel', str(ctx.exception))
+        self.assertIn('tests.BadFieldModel', str(ctx.exception))
         self.assertIn('not_a_field', str(ctx.exception))
         self.assertIn('clean_some_field', str(ctx.exception))
 
@@ -40,7 +40,7 @@ class CleansFieldTestCase(TestCase):
         class NullableFieldModel(models.Model):
             some_field = models.IntegerField(null=True, blank=True)
 
-            @cleans_field('clean_fields.NullableFieldModel.some_field')
+            @cleans_field('tests.NullableFieldModel.some_field')
             def clean_some_field(self, some_field):
                 return some_field + 1 if some_field else 1
 
@@ -68,11 +68,11 @@ class CleansFieldUseCasesTestCase(TestCase):
         class MultipleCleanersModel(models.Model):
             some_field = models.IntegerField()
 
-            @cleans_field('clean_fields.MultipleCleanersModel.some_field')
+            @cleans_field('tests.MultipleCleanersModel.some_field')
             def add_one(self, some_field):
                 return some_field + 1
 
-            @cleans_field('clean_fields.MultipleCleanersModel.some_field')
+            @cleans_field('tests.MultipleCleanersModel.some_field')
             def add_two(self, some_field):
                 return some_field + 2
 
@@ -85,8 +85,8 @@ class CleansFieldUseCasesTestCase(TestCase):
             some_field = models.IntegerField()
             other_field = models.IntegerField()
 
-            @cleans_field('clean_fields.MultipleFieldsModel.some_field')
-            @cleans_field('clean_fields.MultipleFieldsModel.other_field')
+            @cleans_field('tests.MultipleFieldsModel.some_field')
+            @cleans_field('tests.MultipleFieldsModel.other_field')
             def clean_integer_field(self, value):
                 return value + 1
 
@@ -100,7 +100,7 @@ class CleansFieldUseCasesTestCase(TestCase):
             some_field = models.IntegerField()
 
             @staticmethod
-            @cleans_field('clean_fields.StaticCleanerModel.some_field')
+            @cleans_field('tests.StaticCleanerModel.some_field')
             def clean_some_field(some_field):
                 return some_field + 1
 
@@ -113,7 +113,7 @@ class CleansFieldUseCasesTestCase(TestCase):
             some_field = models.IntegerField()
 
             @classmethod
-            @cleans_field('clean_fields.ClassCleanerModel.some_field')
+            @cleans_field('tests.ClassCleanerModel.some_field')
             def clean_some_field(cls, some_field):
                 assert cls == ClassCleanerModel
                 return some_field + 1
@@ -126,7 +126,7 @@ class CleansFieldUseCasesTestCase(TestCase):
         class NoCleanerModel(models.Model):
             some_field = models.IntegerField()
 
-        @cleans_field('clean_fields.NoCleanerModel.some_field')
+        @cleans_field('tests.NoCleanerModel.some_field')
         def clean_some_field(some_field):
             return some_field + 1
 
@@ -139,8 +139,8 @@ class CleansFieldUseCasesTestCase(TestCase):
             some_field = models.IntegerField()
             other_field = models.IntegerField()
 
-            @cleans_field('clean_fields.ErrorRaisingCleanerModel.other_field')
-            @cleans_field('clean_fields.ErrorRaisingCleanerModel.some_field')
+            @cleans_field('tests.ErrorRaisingCleanerModel.other_field')
+            @cleans_field('tests.ErrorRaisingCleanerModel.some_field')
             def clean_some_field(self, some_field):
                 if isinstance(some_field, int):
                     return some_field
