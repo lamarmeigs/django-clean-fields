@@ -1,14 +1,22 @@
 # django-clean-fields
-This Django app allows the definition of methods or functions to clean model object field values on save.
+This Django utility allows the definition of methods or functions to clean model object field values on save.
+
 
 ## Installation
-To be continued...
+Since django-clean-fields is not a Django app, simply include it on your `PYTHONPATH`. The easiest way to do this is installing via `pip`:
+
+```bash
+pip install django-clean-fields
+```
+
+No changes to the project's settings are necessary.
+
 
 ## Usage
 Two alternate implementation options are available: an extended model class that closely resembles conventions used by the [Django forms API](https://docs.djangoproject.com/en/dev/ref/forms/validation/), and a decorator that registers a callable with the [pre_save signal](https://docs.djangoproject.com/en/dev/ref/signals/#django.db.models.signals.pre_save). Which approach to use is a decision left to the developer. The former option may provide the most familiarity with existing conventions; the latter offers more flexibility.
 
 ### CleanFieldsModel
-Any model inheriting from `clean_fields.models.CleanFieldsModel` will check for and run cleaner methods as its first action when saving. Such methods should match the conventions used by [form field validators](https://docs.djangoproject.com/en/dev/ref/forms/validation/), namely:
+Any model inheriting from the abstract `clean_fields.models.CleanFieldsModel` will check for and run cleaner methods as its first action when saving. Such methods should match the conventions used by [form field validators](https://docs.djangoproject.com/en/dev/ref/forms/validation/), namely:
 
 - methods must be named `clean_<field_name>`
 - methods must accept the current value of the field
@@ -60,6 +68,7 @@ def validate_dignified_title(unsaved_title):
     return unsaved_title
 ```
 
+
 ## Discussion
 There is solid reasoning behind the omission of similar behavior in Django's core. For one, it might create a feeling of false security. Validation runs on save, but that does not prevent "uncleaned" data from being committed to the database (for instance, via the ORM's [`bulk_create`](https://docs.djangoproject.com/en/dev/ref/models/querysets/#bulk-create) or [`update`](https://docs.djangoproject.com/en/dev/ref/models/querysets/#update) methods, which circumvent `save()`). Furthermore, a lack of model-level validation encourages a separation between a user's interaction with model objects and a developer's interaction with model objects. This rigorous definition of user roles is usually a Good Thing, but it can impose an unnecessary burden on projects that don't require user-driven interfaces. Be sure that this workflow benefits your project before installing it.
 
@@ -88,3 +97,5 @@ If in doubt, it's worth noting some built-in alternative means to accomplish sim
     The `cleans_field` decorator already leverages [built-in Django signals](https://docs.djangoproject.com/en/dev/topics/signals/) (specifically, the [pre_save signal](https://docs.djangoproject.com/en/dev/ref/signals/#django.db.models.signals.pre_save)). It is possible to handle field scrubbing directly by defining your own signal handlers and connecting them to the appropriate signal.
 
     The greatest shortcoming of this approach is that it encourages bad OO design: signal handlers of this nature would easily be defined apart from the models which they are meant to modify. Even implemented as staticmethods on the appropriate models, their method signature is obtuse, and therefore difficult to use outside of the context of signals.
+
+This project intends to pick up the slack where the above built-in methods fall short, providing a simple interface to support streamlined model design. It's not uncircumventable, so _caveat emptor_, but aims to make your life easier.
