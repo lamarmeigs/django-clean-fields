@@ -92,3 +92,6 @@ ENV/
 
 # todo list
 todo.*
+
+# PyPI
+.pypirc
