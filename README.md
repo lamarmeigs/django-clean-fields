@@ -78,11 +78,11 @@ If in doubt, it's worth noting some built-in alternative means to accomplish sim
 
     [Django form-field validation](https://docs.djangoproject.com/en/dev/ref/forms/validation/) allows cleaning both specific values or the entirety of a submitted form. Used with a [ModelForm](https://docs.djangoproject.com/en/dev/topics/forms/modelforms/#modelform), this is the best way to scrub data delivered via the user interface.
 
-    However, forms and their validation are intended to be used within the context of a web page. They loose much of their simplicity when handled entirely on the backend.
+    However, forms and their validation are intended to be used within the context of a web page. They lose much of their simplicity when handled entirely on the backend.
 
 2. Model field constraints and validators
 
-    Model fields provide two ways avoid committing erroneous values to the database. The first are [field options](https://docs.djangoproject.com/en/def/ref/models/fields/#field-options); passed as keyword arguments to your fields declarations, these will enforce value contraints on the database level (eg. CharField's max_length). The second is the ability to define [validators](https://docs.djangoproject.com/en/dev/ref/validators/#module-django.core.validators). These functions, more flexible in Python than at the database level, will raise errors if the values to be saved to not adhere to some defined pattern or convention.
+    Model fields provide two ways to avoid committing erroneous values to the database. The first are [field options](https://docs.djangoproject.com/en/def/ref/models/fields/#field-options); passed as keyword arguments to your fields declarations, these will enforce value contraints on the database level (eg. CharField's max_length). The second is the ability to define [validators](https://docs.djangoproject.com/en/dev/ref/validators/#module-django.core.validators). These functions, more flexible in Python than at the database level, will raise errors if the values to be saved to not adhere to some defined pattern or convention.
 
     While both these options keep the validation at the model level, their benefit is merely error prevention. Neither allow the ability to "massage" data into an acceptable format.
 
