@@ -11,7 +11,7 @@ except ImportError:
 
 setup(
     name='django-clean-fields',
-    version='0.1.0',
+    version='0.2.0',
     url='https://github.com/lamarmeigs/django-clean-fields',
     author='Lamar Meigs',
     author_email='lamarmeigs@gmail.com',
@@ -19,7 +19,7 @@ setup(
     description='A Django utility to clean model field values on save.',
     long_description=long_description,
     packages=find_packages(exclude=['tests']),
-    install_requires=['Django>=1.8'],
+    install_requires=['Django>=1.7'],
     test_suite='run_tests.run_tests',
     tests_require=['mock==2.0.0'],
     zip_safe=True,
@@ -28,8 +28,10 @@ setup(
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
         'Framework :: Django',
+        'Framework :: Django :: 1.7',
         'Framework :: Django :: 1.8',
         'Framework :: Django :: 1.9',
+        'Framework :: Django :: 1.10',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
