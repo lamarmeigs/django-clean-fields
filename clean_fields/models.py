@@ -6,6 +6,26 @@ from __future__ import unicode_literals
 from django.db.models import Model
 
 
+def get_model_field_names(instance):
+    """Return names of all fields on model instance.
+
+    In Django 1.8 and later, a model instance's _meta provides the `get_fields`
+    method for retrieving field information. Prior versions must rely on
+    _meta's `get_all_field_names` method.
+
+    Args:
+        instance (django.db.models.Model): an instance of a registered model
+
+    Return:
+        list of str
+    """
+    try:
+        field_names = [field.name for field in instance._meta.get_fields()]
+    except AttributeError:
+        field_names = instance._meta.get_all_field_names()
+    return field_names
+
+
 class BaseCleanFieldsModel(Model):
     """Represents a base model that calls registered field cleaners on save.
 
@@ -23,7 +43,7 @@ class BaseCleanFieldsModel(Model):
 
     def save(self, *args, **kwargs):
         """Call cleaners for each field before saving."""
-        field_names = [field.name for field in self._meta.get_fields()]
+        field_names = get_model_field_names(self)
         for field_name in field_names:
             field_cleaner = self._get_field_cleaner(field_name)
             if field_cleaner:
