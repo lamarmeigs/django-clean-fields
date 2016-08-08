@@ -9,9 +9,9 @@ from django.db.models import Model
 def get_model_field_names(instance):
     """Return names of all fields on model instance.
 
-    In Django 1.8 and later, a model instance's _meta provides the `get_fields`
-    method for retrieving field information. Prior versions must rely on
-    _meta's `get_all_field_names` method.
+    In Django 1.8 and later, a model instance's `_meta` provides the
+    `get_fields` method for retrieving field information. Prior versions must
+    rely on `_meta`'s `get_all_field_names` method.
 
     Args:
         instance (django.db.models.Model): an instance of a registered model
@@ -47,8 +47,7 @@ class BaseCleanFieldsModel(Model):
         for field_name in field_names:
             field_cleaner = self._get_field_cleaner(field_name)
             if field_cleaner:
-                field_value = getattr(self, field_name)
-                setattr(self, field_name, field_cleaner(field_value))
+                setattr(self, field_name, field_cleaner())
         return super(BaseCleanFieldsModel, self).save(*args, **kwargs)
 
     def _get_field_cleaner(self, field_name):

@@ -19,7 +19,7 @@ Two alternate implementation options are available: an extended model class that
 Any model inheriting from the abstract `clean_fields.models.CleanFieldsModel` will check for and run cleaner methods as its first action when saving. Such methods should match the conventions used by [form field validators](https://docs.djangoproject.com/en/dev/ref/forms/validation/), namely:
 
 - methods must be named `clean_<field_name>`
-- methods must accept the current value of the field
+- methods must accept no parameters
 - methods must return the "cleaned" value, ready to be written to the database
 - method may raise an exception to interrupt saving
 
@@ -33,16 +33,16 @@ from clean_fields.models import CleanFieldsModel
 class Article(CleanFieldsModel):
     title = models.CharField(max_length=30)
 
-    def clean_title(self, unsaved_title):
-        if "you'll never believe" in unsaved_title.lower():
+    def clean_title(self):
+        if "you'll never believe" in self.title.lower():
             raise ValidationError('Sensationalist Clickbait Not Allowed')
-        return unsaved_title.title()
+        return self.title.title()
 ```
 
 ### cleans_field Decorator
 The `clean_fields.decorators.cleans_field` decorator can be applied to any callable, which will then be invoked when the [pre_save signal](https://docs.djangoproject.com/en/dev/ref/signals/#django.db.models.signals.pre_save) is sent by the corresponding model. The decorator requires a single argument: a reference string identifying the field to clean, which must follow the pattern "app_name.ModelName.field_name". Note that the full reference must be provided even if the callable is within the model class itself.
 
-As above, any decorated callable must accept the current field value and return the "cleaned" value. The code below has the identical effect as the above example.
+Any decorated callable must accept the current field value and return the "cleaned" value. The code below has the identical effect as the above example.
 
 Example:
 

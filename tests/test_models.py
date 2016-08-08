@@ -78,7 +78,7 @@ class BaseCleanFieldsModelTestCase(TestCase):
         with patch.object(
             dummy,
             '_get_field_cleaner',
-            return_value=lambda x: 42
+            return_value=lambda: 42
         ):
             dummy.save()
         self.assertEqual(dummy.some_field, 42)
@@ -104,7 +104,7 @@ class CleanFieldsModelTestCase(TestCase):
         class CleaningNaiveModel(CleanFieldsModel):
             some_field = models.IntegerField()
 
-            def clean_some_field(self, some_field):
+            def clean_some_field(self):
                 return 42
 
         dummy = CleaningNaiveModel(some_field=5)
