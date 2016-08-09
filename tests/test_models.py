@@ -60,26 +60,15 @@ class BaseCleanFieldsModelTestCase(TestCase):
             BaseCleanFieldsModel()._get_field_cleaner('field_name')
 
     @patch('django.db.models.Model.save')
-    def test_save_invokes_scrub_fields(self, mock_save):
+    def test_save_invokes_clean_single_fields(self, mock_save):
         class SaveableBaseModel(BaseCleanFieldsModel):
             some_field = models.IntegerField()
 
         dummy = SaveableBaseModel(some_field=5)
-        with patch.object(dummy, 'scrub_fields') as mock_scrub_fields:
+        with patch.object(dummy, 'clean_single_fields') as mock_clean_fields:
             dummy.save()
-        mock_scrub_fields.assert_called_once_with()
+        mock_clean_fields.assert_called_once_with()
         mock_save.assert_called_once_with()
-
-    def test_scrub_fields_delegation(self):
-        class ScrubFieldsBaseModel(BaseCleanFieldsModel):
-            some_field = models.IntegerField()
-
-        dummy = ScrubFieldsBaseModel(some_field=5)
-        with patch.object(dummy, 'clean_single_fields') as mock_clean_single:
-            with patch.object(dummy, 'clean_multiple_fields') as mock_multiple:
-                dummy.scrub_fields()
-        mock_clean_single.assert_called_once_with()
-        mock_multiple.assert_called_once_with()
 
     def test_clean_single_fields_without_cleaner(self):
         class CleanerlessBaseModel(BaseCleanFieldsModel):
@@ -102,14 +91,6 @@ class BaseCleanFieldsModelTestCase(TestCase):
         ):
             dummy.clean_single_fields()
         self.assertEqual(dummy.some_field, 42)
-
-    def test_clean_multiple_fields_has_no_effect(self):
-        class CleanerlessMultipleBaseModel(BaseCleanFieldsModel):
-            some_field = models.IntegerField()
-
-        dummy = CleanerlessMultipleBaseModel(some_field=5)
-        dummy.clean_multiple_fields()
-        self.assertEqual(dummy.some_field, 5)
 
 
 class CleanFieldsModelTestCase(TestCase):
