@@ -43,12 +43,21 @@ class BaseCleanFieldsModel(Model):
 
     def save(self, *args, **kwargs):
         """Call cleaners for each field before saving."""
+        self.scrub_fields()
+        return super(BaseCleanFieldsModel, self).save(*args, **kwargs)
+
+    def scrub_fields(self):
+        """Run all cleaner methods."""
+        self.clean_single_fields()
+        self.clean_multiple_fields()
+
+    def clean_single_fields(self):
+        """Locate and invoke cleaner methods for each individial field."""
         field_names = get_model_field_names(self)
         for field_name in field_names:
             field_cleaner = self._get_field_cleaner(field_name)
             if field_cleaner:
                 setattr(self, field_name, field_cleaner())
-        return super(BaseCleanFieldsModel, self).save(*args, **kwargs)
 
     def _get_field_cleaner(self, field_name):
         """Locate field cleaner callables for field with the given name.
@@ -61,6 +70,10 @@ class BaseCleanFieldsModel(Model):
             callable or None
         """
         raise NotImplementedError()
+
+    def clean_multiple_fields(self):
+        """Reserved method for cleaning multiple fields."""
+        pass
 
 
 class CleanFieldsModel(BaseCleanFieldsModel):
