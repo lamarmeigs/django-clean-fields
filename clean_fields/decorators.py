@@ -7,11 +7,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
 from clean_fields.exc import CleanFieldsConfigurationError
-
-
-class NoValue(object):
-    """Empty class for disambiguating calls to getattr"""
-    pass
+from clean_fields.utils import get_model_field_value, parse_field_ref
 
 
 def cleans_field(field_ref):
@@ -21,8 +17,7 @@ def cleans_field(field_ref):
         field_ref (str): a label for the model field to clean, following the
             convention `app_name.ModelName.field_name`
     """
-    app_name, model_name, field_name = field_ref.split('.')
-    model_label = '.'.join([app_name, model_name])
+    field_name, model_label = parse_field_ref(field_ref)
 
     def _clean_wrapper(cleaner_function):
         # Register a pre-save signal handler that calls the cleaner_function
@@ -30,8 +25,9 @@ def cleans_field(field_ref):
         @receiver(pre_save, sender=model_label, weak=False)
         def signal_handler(sender, instance, **kwargs):
             """Run the cleaner_function on instance's field"""
-            field_value = getattr(instance, field_name, NoValue)
-            if field_value == NoValue:
+            try:
+                field_value = get_model_field_value(instance, field_name)
+            except AttributeError:
                 raise CleanFieldsConfigurationError(
                     model_label,
                     field_name,

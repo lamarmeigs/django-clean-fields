@@ -8,50 +8,7 @@ from unittest import TestCase
 from django.db import models
 from mock import patch
 
-from clean_fields.models import (
-    BaseCleanFieldsModel, CleanFieldsModel, get_model_field_names
-)
-
-
-class GetModelFieldNamesTestCase(TestCase):
-    def test_meta_has_get_field_method(self):
-        class GetFieldModel(models.Model):
-            some_field = models.IntegerField()
-
-        class MockField(object):
-            def __init__(self, name='test field'):
-                self.name = name
-
-        instance = GetFieldModel(some_field=5)
-        instance._meta.get_fields = lambda x: x
-        instance._meta.get_all_field_names = lambda x: x
-        with patch.object(
-            instance._meta,
-            'get_fields',
-            return_value=[MockField('id'), MockField('some_field')]
-        ):
-            field_names = get_model_field_names(instance)
-        self.assertEqual(field_names, ['id', 'some_field'])
-
-    def test_meta_has_no_get_field_method(self):
-        class GetAllFieldNameModel(models.Model):
-            some_field = models.IntegerField()
-
-        instance = GetAllFieldNameModel(some_field=5)
-        instance._meta.get_fields = lambda x: x
-        instance._meta.get_all_field_names = lambda x: x
-        with patch.object(
-            instance._meta,
-            'get_fields',
-            side_effect=AttributeError()
-        ):
-            with patch.object(
-                instance._meta,
-                'get_all_field_names',
-                return_value=['id', 'some_field']
-            ):
-                field_names = get_model_field_names(instance)
-        self.assertEqual(field_names, ['id', 'some_field'])
+from clean_fields.models import BaseCleanFieldsModel, CleanFieldsModel
 
 
 class BaseCleanFieldsModelTestCase(TestCase):
