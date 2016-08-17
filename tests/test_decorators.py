@@ -9,7 +9,9 @@ from django.db import models
 from django.db.models.signals import pre_save
 from mock import Mock, patch
 
-from clean_fields.decorators import cleans_field, cleans_field_with_context
+from clean_fields.decorators import (
+    call_cleaner, cleans_field, cleans_field_with_context
+)
 from clean_fields.exc import CleanFieldsConfigurationError
 
 
@@ -288,3 +290,59 @@ class CleansFieldWithContextUseCasesTestCase(TestCase):
         with self.assertRaises(TypeError) as ctx:
             pre_save.send(dummy.__class__, instance=dummy)
         self.assertEqual(str(ctx.exception), 'some_field is the wrong type')
+
+
+def dummy_wrapper(fn):
+    """Simple wrapper used for testing"""
+    def _run_callable(*args, **kwargs):
+        return fn(*args, **kwargs)
+    return _run_callable
+
+
+class CallCleanerTestCase(TestCase):
+    def test_instance_method_cleaner(self):
+        class InstanceMethodModel(models.Model):
+            some_field = models.IntegerField()
+
+            def clean_some_field(self, some_field):
+                return some_field + 1
+
+        dummy = InstanceMethodModel(some_field=5)
+        value = call_cleaner(dummy.clean_some_field, [dummy.some_field], dummy)
+        self.assertEqual(value, 6)
+
+    def test_wrapped_instance_method_cleaner(self):
+        class WrappedInstanceMethodModel(models.Model):
+            some_field = models.IntegerField()
+
+            def clean_some_field(self, some_field):
+                return some_field + 1
+
+        dummy = WrappedInstanceMethodModel(some_field=5)
+        wrapped_cleaner = dummy_wrapper(dummy.clean_some_field)
+        value = call_cleaner(wrapped_cleaner, [dummy.some_field], dummy)
+        self.assertEqual(value, 6)
+
+    def test_wrapped_instance_method_cleaner_raises_type_error(self):
+        class ErrorRaisingWrappedMethodModel(models.Model):
+            some_field = models.IntegerField()
+
+            def clean_some_field(self, some_field):
+                raise TypeError('this is a legitimate error')
+
+        dummy = ErrorRaisingWrappedMethodModel(some_field=5)
+        wrapped_cleaner = dummy_wrapper(dummy.clean_some_field)
+        with self.assertRaises(TypeError) as ctx:
+            call_cleaner(wrapped_cleaner, [dummy.some_field], dummy)
+        self.assertEqual(str(ctx.exception), 'this is a legitimate error')
+
+    def test_function_cleaner(self):
+        class FunctionCleanerModel(models.Model):
+            some_field = models.IntegerField()
+
+        def clean_some_field(some_field):
+            return some_field + 1
+
+        dummy = FunctionCleanerModel(some_field=5)
+        value = call_cleaner(clean_some_field, [dummy.some_field], dummy)
+        self.assertEqual(value, 6)

@@ -3,6 +3,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import re
+
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
@@ -36,26 +38,11 @@ def cleans_field(field_ref):
                     cleaner_function.__name__
                 )
 
-            # The cleaner_function callable, while here recognized only as a
-            # function, could actually be of many types: an instance method,
-            # a static method, a class method, or a function. To handle these
-            # cases, first try to execute the callable bound to the instance.
-            # If none exist, the callable either has an already-run inner
-            # decorator (in which case, must be called with instance as a first
-            # argument), or is a function (which can be called directly).
-            field_cleaner = getattr(instance, cleaner_function.__name__, None)
-            if field_cleaner is not None:
-                cleaned_value = field_cleaner(field_value)
-            else:
-                try:
-                    cleaned_value = cleaner_function(instance, field_value)
-                except TypeError as e:
-                    if (
-                        'takes exactly 1 argument' not in str(e) and
-                        'takes 1 positional argument' not in str(e)
-                    ):
-                        raise e
-                    cleaned_value = cleaner_function(field_value)
+            cleaned_value = call_cleaner(
+                cleaner_function,
+                [field_value],
+                instance
+            )
             setattr(instance, field_name, cleaned_value)
 
         # To ensure the wrapped method can still be invoked, define an
@@ -96,24 +83,11 @@ def cleans_field_with_context(field_ref):
                     cleaner_function.__name__
                 )
 
-            # Invoke the cleaner_function callable in the most correct manner.
-            field_cleaner = getattr(instance, cleaner_function.__name__, None)
-            if field_cleaner is not None:
-                cleaned_value = field_cleaner(field_value, context)
-            else:
-                try:
-                    cleaned_value = cleaner_function(
-                        instance,
-                        field_value,
-                        context
-                    )
-                except TypeError as e:
-                    if (
-                        'takes exactly 2 arguments' not in str(e) and
-                        'takes 2 positional arguments' not in str(e)
-                    ):
-                        raise e
-                    cleaned_value = cleaner_function(field_value, context)
+            cleaned_value = call_cleaner(
+                cleaner_function,
+                [field_value, context],
+                instance
+            )
             setattr(instance, field_name, cleaned_value)
 
         # Define an additional wrapper to execute cleaner_function with
@@ -123,3 +97,45 @@ def cleans_field_with_context(field_ref):
 
         return _run_cleaner_with_context
     return _clean_with_context_wrapper
+
+
+def call_cleaner(cleaner_callable, args, instance):
+    """Invokes the cleaner_callable with given arguments.
+
+    The cleaner_callable could be of many types: an instance method, a static
+    method, a class method, or a function. This function tries to address these
+    in the following order:
+        - callable is an method bound to instance
+        - callable is bound to instance with an already-run inner decorator
+        - callable is an independent function
+
+    Args:
+        cleaner_callable (callable): method/function to invoke
+        args (list): list of arguments to be passed to cleaner_callable
+        instance (model instance): model instance for which this cleaner should
+            be called
+
+    Return:
+        The return value of cleaner_callable
+    """
+    # First, try to invoke a method on instance with the same name as
+    # cleaner_callable. This will handle the case in which cleaner_callable is
+    # an instance method.
+    field_cleaner = getattr(instance, cleaner_callable.__name__, None)
+    if field_cleaner is not None:
+        cleaned_value = field_cleaner(*args)
+    else:
+        # In case cleaner_callable is a wrapper to a callable bound to
+        # instance, invoke it with instance as the first argument
+        try:
+            cleaned_value = cleaner_callable(instance, *args)
+        except TypeError as e:
+            # Except in the case of legitimate TypeErrors raised from within
+            # cleaner_callable, invoke the callable as an independent function
+            if not re.search(
+                r'takes( exactly)? \d( positional)? arguments?',
+                str(e)
+            ):
+                raise e
+            cleaned_value = cleaner_callable(*args)
+    return cleaned_value
