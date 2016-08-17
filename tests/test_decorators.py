@@ -110,188 +110,6 @@ class CleansFieldWithContextTestCase(TestCase):
         cleaner.assert_called_once_with(1, 2, 'foobar')
 
 
-class CleansFieldUseCasesTestCase(TestCase):
-    """Runs tests on possible use cases"""
-
-    def test_multiple_cleaners_for_single_field(self):
-        class MultipleCleanersModel(models.Model):
-            some_field = models.IntegerField()
-
-            @cleans_field('tests.MultipleCleanersModel.some_field')
-            def add_one(self, some_field):
-                return some_field + 1
-
-            @cleans_field('tests.MultipleCleanersModel.some_field')
-            def add_two(self, some_field):
-                return some_field + 2
-
-        dummy = MultipleCleanersModel(some_field=5)
-        pre_save.send(dummy.__class__, instance=dummy)
-        self.assertEqual(dummy.some_field, 8)
-
-    def test_single_cleaner_for_multiple_fields(self):
-        class MultipleFieldsModel(models.Model):
-            some_field = models.IntegerField()
-            other_field = models.IntegerField()
-
-            @cleans_field('tests.MultipleFieldsModel.some_field')
-            @cleans_field('tests.MultipleFieldsModel.other_field')
-            def clean_integer_field(self, value):
-                return value + 1
-
-        dummy = MultipleFieldsModel(some_field=4, other_field=5)
-        pre_save.send(dummy.__class__, instance=dummy)
-        self.assertEqual(dummy.some_field, 5)
-        self.assertEqual(dummy.other_field, 6)
-
-    def test_staticmethod_cleaner(self):
-        class StaticCleanerModel(models.Model):
-            some_field = models.IntegerField()
-
-            @staticmethod
-            @cleans_field('tests.StaticCleanerModel.some_field')
-            def clean_some_field(some_field):
-                return some_field + 1
-
-        dummy = StaticCleanerModel(some_field=5)
-        pre_save.send(dummy.__class__, instance=dummy)
-        self.assertEqual(dummy.some_field, 6)
-
-    def test_classmethod_cleaner(self):
-        class ClassCleanerModel(models.Model):
-            some_field = models.IntegerField()
-
-            @classmethod
-            @cleans_field('tests.ClassCleanerModel.some_field')
-            def clean_some_field(cls, some_field):
-                assert cls == ClassCleanerModel
-                return some_field + 1
-
-        dummy = ClassCleanerModel(some_field=5)
-        pre_save.send(dummy.__class__, instance=dummy)
-        self.assertEqual(dummy.some_field, 6)
-
-    def test_independent_function_cleaner(self):
-        class NoCleanerModel(models.Model):
-            some_field = models.IntegerField()
-
-        @cleans_field('tests.NoCleanerModel.some_field')
-        def clean_some_field(some_field):
-            return some_field + 1
-
-        dummy = NoCleanerModel(some_field=5)
-        pre_save.send(dummy.__class__, instance=dummy)
-        self.assertEqual(dummy.some_field, 6)
-
-    def test_cleaner_raises_type_error(self):
-        class ErrorRaisingCleanerModel(models.Model):
-            some_field = models.IntegerField()
-            other_field = models.IntegerField()
-
-            @cleans_field('tests.ErrorRaisingCleanerModel.other_field')
-            @cleans_field('tests.ErrorRaisingCleanerModel.some_field')
-            def clean_some_field(self, some_field):
-                if isinstance(some_field, int):
-                    return some_field
-                raise TypeError('some_field is the wrong type')
-
-        dummy = ErrorRaisingCleanerModel(some_field=5, other_field='str')
-        with self.assertRaises(TypeError) as ctx:
-            pre_save.send(dummy.__class__, instance=dummy)
-        self.assertEqual(str(ctx.exception), 'some_field is the wrong type')
-
-
-class CleansFieldWithContextUseCasesTestCase(TestCase):
-    """Runs tests on possible use cases"""
-
-    def test_multiple_cleaners_for_single_field(self):
-        class ManyCleanersContextModel(models.Model):
-            field = models.IntegerField()
-
-            @cleans_field_with_context('tests.ManyCleanersContextModel.field')
-            def add_one(self, some_field, data):
-                return some_field + 1
-
-            @cleans_field_with_context('tests.ManyCleanersContextModel.field')
-            def add_two(self, some_field, data):
-                return some_field + 2
-
-        dummy = ManyCleanersContextModel(field=5)
-        pre_save.send(dummy.__class__, instance=dummy)
-        self.assertEqual(dummy.field, 8)
-
-    def test_single_cleaner_for_multiple_fields(self):
-        class MultipleFieldContextModel(models.Model):
-            field = models.IntegerField()
-            other = models.IntegerField()
-
-            @cleans_field_with_context('tests.MultipleFieldContextModel.field')
-            @cleans_field_with_context('tests.MultipleFieldContextModel.other')
-            def clean_integer_field(self, value, data):
-                return value + 1
-
-        dummy = MultipleFieldContextModel(field=4, other=5)
-        pre_save.send(dummy.__class__, instance=dummy)
-        self.assertEqual(dummy.field, 5)
-        self.assertEqual(dummy.other, 6)
-
-    def test_staticmethod_cleaner(self):
-        class StaticCleanerContextModel(models.Model):
-            field = models.IntegerField()
-
-            @staticmethod
-            @cleans_field_with_context('tests.StaticCleanerContextModel.field')
-            def clean_field(field, data):
-                return field + 1
-
-        dummy = StaticCleanerContextModel(field=5)
-        pre_save.send(dummy.__class__, instance=dummy)
-        self.assertEqual(dummy.field, 6)
-
-    def test_classmethod_cleaner(self):
-        class ClassCleanerContextModel(models.Model):
-            field = models.IntegerField()
-
-            @classmethod
-            @cleans_field_with_context('tests.ClassCleanerContextModel.field')
-            def clean_some_field(cls, some_field, data):
-                assert cls == ClassCleanerContextModel
-                return some_field + 1
-
-        dummy = ClassCleanerContextModel(field=5)
-        pre_save.send(dummy.__class__, instance=dummy)
-        self.assertEqual(dummy.field, 6)
-
-    def test_independent_function_cleaner(self):
-        class NoCleanerContextModel(models.Model):
-            some_field = models.IntegerField()
-
-        @cleans_field_with_context('tests.NoCleanerContextModel.some_field')
-        def clean_some_field(some_field, data):
-            return some_field + 1
-
-        dummy = NoCleanerContextModel(some_field=5)
-        pre_save.send(dummy.__class__, instance=dummy)
-        self.assertEqual(dummy.some_field, 6)
-
-    def test_cleaner_raises_type_error(self):
-        class ErrorContextModel(models.Model):
-            some_field = models.IntegerField()
-            other_field = models.IntegerField()
-
-            @cleans_field_with_context('tests.ErrorContextModel.other_field')
-            @cleans_field_with_context('tests.ErrorContextModel.some_field')
-            def clean_some_field(self, some_field, data):
-                if isinstance(some_field, int):
-                    return some_field
-                raise TypeError('some_field is the wrong type')
-
-        dummy = ErrorContextModel(some_field=5, other_field='str')
-        with self.assertRaises(TypeError) as ctx:
-            pre_save.send(dummy.__class__, instance=dummy)
-        self.assertEqual(str(ctx.exception), 'some_field is the wrong type')
-
-
 def dummy_wrapper(fn):
     """Simple wrapper used for testing"""
     def _run_callable(*args, **kwargs):
@@ -346,3 +164,152 @@ class CallCleanerTestCase(TestCase):
         dummy = FunctionCleanerModel(some_field=5)
         value = call_cleaner(clean_some_field, [dummy.some_field], dummy)
         self.assertEqual(value, 6)
+
+
+class UseCasesTestCase(TestCase):
+    """Runs tests on expected use cases"""
+
+    def test_multiple_cleaners_for_single_field(self):
+        class MultipleCleanersModel(models.Model):
+            some_field = models.IntegerField()
+            other = models.IntegerField()
+
+            @cleans_field('tests.MultipleCleanersModel.some_field')
+            def add_one(self, some_field):
+                return some_field + 1
+
+            @cleans_field('tests.MultipleCleanersModel.some_field')
+            def add_two(self, some_field):
+                return some_field + 2
+
+            @cleans_field_with_context('tests.MultipleCleanersModel.other')
+            def add_three(self, other_field, data):
+                return other_field + 3 if data['some_field'] else other_field
+
+            @cleans_field_with_context('tests.MultipleCleanersModel.other')
+            def add_four(self, other_field, data):
+                return other_field + 4 if data['some_field'] else other_field
+
+        dummy = MultipleCleanersModel(some_field=5, other=6)
+        pre_save.send(dummy.__class__, instance=dummy)
+        self.assertEqual(dummy.some_field, 8)
+        self.assertEqual(dummy.other, 13)
+
+    def test_single_cleaner_for_multiple_fields(self):
+        class MultipleFieldsModel(models.Model):
+            field_1 = models.IntegerField()
+            field_2 = models.IntegerField()
+            field_3 = models.IntegerField()
+            field_4 = models.IntegerField()
+
+            @cleans_field('tests.MultipleFieldsModel.field_1')
+            @cleans_field('tests.MultipleFieldsModel.field_2')
+            def clean_integer_field(self, value):
+                return value + 1
+
+            @cleans_field_with_context('tests.MultipleFieldsModel.field_3')
+            @cleans_field_with_context('tests.MultipleFieldsModel.field_4')
+            def clean_integer_field_with_context(self, value, data):
+                return value + 1 if data['field_1'] != 0 else value
+
+        dummy = MultipleFieldsModel(field_1=1, field_2=2, field_3=3, field_4=4)
+        pre_save.send(dummy.__class__, instance=dummy)
+        self.assertEqual(dummy.field_1, 2)
+        self.assertEqual(dummy.field_2, 3)
+        self.assertEqual(dummy.field_3, 4)
+        self.assertEqual(dummy.field_4, 5)
+
+    def test_staticmethod_cleaner(self):
+        class StaticCleanerModel(models.Model):
+            some_field = models.IntegerField()
+            other_field = models.IntegerField()
+
+            @staticmethod
+            @cleans_field('tests.StaticCleanerModel.some_field')
+            def clean_some_field(some_field):
+                return some_field + 1
+
+            @staticmethod
+            @cleans_field_with_context('tests.StaticCleanerModel.other_field')
+            def clean_other_field(other_field, data):
+                return other_field + 1 if data['some_field'] != 0 else 1
+
+        dummy = StaticCleanerModel(some_field=5, other_field=6)
+        pre_save.send(dummy.__class__, instance=dummy)
+        self.assertEqual(dummy.some_field, 6)
+        self.assertEqual(dummy.other_field, 7)
+
+    def test_classmethod_cleaner(self):
+        class ClassCleanerModel(models.Model):
+            some_field = models.IntegerField()
+            other_field = models.IntegerField()
+
+            @classmethod
+            @cleans_field('tests.ClassCleanerModel.some_field')
+            def clean_some_field(cls, some_field):
+                assert cls == ClassCleanerModel
+                return some_field + 1
+
+            @classmethod
+            @cleans_field_with_context('tests.ClassCleanerModel.other_field')
+            def clean_other_field(cls, other_field, data):
+                assert cls == ClassCleanerModel
+                return other_field + 1
+
+        dummy = ClassCleanerModel(some_field=5, other_field=6)
+        pre_save.send(dummy.__class__, instance=dummy)
+        self.assertEqual(dummy.some_field, 6)
+        self.assertEqual(dummy.other_field, 7)
+
+    def test_independent_function_cleaner(self):
+        class NoCleanerModel(models.Model):
+            some_field = models.IntegerField()
+            other_field = models.IntegerField()
+
+        @cleans_field('tests.NoCleanerModel.some_field')
+        def clean_some_field(some_field):
+            return some_field + 1
+
+        @cleans_field_with_context('tests.NoCleanerModel.other_field')
+        def clean_other_field(other_field, data):
+            return other_field + 1 if data['some_field'] != 0 else other_field
+
+        dummy = NoCleanerModel(some_field=5, other_field=6)
+        pre_save.send(dummy.__class__, instance=dummy)
+        self.assertEqual(dummy.some_field, 6)
+        self.assertEqual(dummy.other_field, 7)
+
+    def test_cleaner_raises_type_error(self):
+        class RaiseErrorCleanerModel(models.Model):
+            field_1 = models.IntegerField()
+            field_2 = models.IntegerField()
+            field_3 = models.IntegerField()
+            field_4 = models.IntegerField()
+
+            @cleans_field('tests.RaiseErrorCleanerModel.field_1')
+            @cleans_field('tests.RaiseErrorCleanerModel.field_2')
+            def clean_some_field(self, some_field):
+                if isinstance(some_field, int):
+                    return some_field
+                raise TypeError('some_field is the wrong type')
+
+            @cleans_field_with_context('tests.RaiseErrorCleanerModel.field_3')
+            @cleans_field_with_context('tests.RaiseErrorCleanerModel.field_4')
+            def clean_other_fields(self, other_field, data):
+                if isinstance(other_field, int):
+                    return other_field
+                raise TypeError('other_field is the wrong type')
+
+        dummy = RaiseErrorCleanerModel(
+            field_1=5, field_2='str', field_3=4, field_4=4
+        )
+        with self.assertRaises(TypeError) as ctx:
+            pre_save.send(dummy.__class__, instance=dummy)
+        self.assertEqual(str(ctx.exception), 'some_field is the wrong type')
+
+        dummy = RaiseErrorCleanerModel(
+            field_1=1, field_2=2, field_3='str', field_4=4
+        )
+        with self.assertRaises(TypeError) as ctx:
+            pre_save.send(dummy.__class__, instance=dummy)
+        self.assertEqual(str(ctx.exception), 'other_field is the wrong type')
