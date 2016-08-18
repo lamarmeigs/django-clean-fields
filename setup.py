@@ -11,7 +11,7 @@ except ImportError:
 
 setup(
     name='django-clean-fields',
-    version='0.2.0',
+    version='0.3.0',
     url='https://github.com/lamarmeigs/django-clean-fields',
     author='Lamar Meigs',
     author_email='lamarmeigs@gmail.com',
@@ -25,7 +25,7 @@ setup(
     zip_safe=True,
     keywords='django, model, field, validation',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
         'Framework :: Django',
         'Framework :: Django :: 1.7',
