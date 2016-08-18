@@ -39,7 +39,7 @@ class Article(CleanFieldsModel):
         return self.title.title()
 ```
 
-### cleans_field Decorator
+### Decorators
 The `clean_fields.decorators.cleans_field` decorator can be applied to any callable, which will then be invoked when the [pre_save signal](https://docs.djangoproject.com/en/dev/ref/signals/#django.db.models.signals.pre_save) is sent by the corresponding model. The decorator requires a single argument: a reference string identifying the field to clean, which must follow the pattern "app_name.ModelName.field_name". Note that the full reference must be provided even if the callable is within the model class itself.
 
 Any decorated callable must accept the current field value and return the "cleaned" value. The code below has the identical effect as the above example.
@@ -66,6 +66,26 @@ def validate_dignified_title(unsaved_title):
     if "you'll never believe" in unsaved_title.lower():
         raise ValidationError('Sensationalist Clickbait Not Allowed')
     return unsaved_title
+```
+
+If references to other fields on the model instance are necessary, the `clean_fields.decorators.cleans_field_with_context` decorator should be used instead. This decorator works the same as `cleans_field`, but passes an additional parameter to the cleaner: a dictionary containing the current field names and values.
+
+Example:
+
+```python
+from django.db import models
+from clean_fields.decorators import cleans_field_with_context
+
+class Article(models.Model):
+    title = models.CharField(max_length=30)
+    is_published = models.BooleanField()
+
+    @cleans_field_with_context('your_app.Article.title')
+    def ensure_title_case_when_unpublished(self, unsaved_title, data):
+        if data['is_published']:
+            return unsaved_title
+        else:
+            return unsaved_title.title()
 ```
 
 
