@@ -49,7 +49,23 @@ class BaseCleanFieldsModel(Model):
         raise NotImplementedError()
 
 
-class CleanFieldsModel(BaseCleanFieldsModel):
+class ValidationMixin(object):
+    """Mixin class to optionally enable field cleaning within `Model.clean()`
+
+    When class attribute `clean_on_validate` is set to True, invoke all field
+    cleaners in Django model's built-in `clean()` method. Note that any class
+    inheriting this mixin must also inherit BaseCleanFieldsModel.
+    """
+    clean_on_validate = False
+
+    def clean(self):
+        """Run field cleaners for this model instance"""
+        if self.clean_on_validate:
+            self.clean_single_fields()
+        super(ValidationMixin, self).clean()
+
+
+class CleanFieldsModel(ValidationMixin, BaseCleanFieldsModel):
     """An abstract model to support the use of specially-named cleaner methods.
 
     This class locates cleaner methods by name, expecting them to exist on the

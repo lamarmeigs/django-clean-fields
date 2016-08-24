@@ -8,7 +8,9 @@ from unittest import TestCase
 from django.db import models
 from mock import patch
 
-from clean_fields.models import BaseCleanFieldsModel, CleanFieldsModel
+from clean_fields.models import (
+    BaseCleanFieldsModel, CleanFieldsModel, ValidationMixin
+)
 
 
 class BaseCleanFieldsModelTestCase(TestCase):
@@ -48,6 +50,30 @@ class BaseCleanFieldsModelTestCase(TestCase):
         ):
             dummy.clean_single_fields()
         self.assertEqual(dummy.some_field, 42)
+
+
+class ValidationMixinTestCase(TestCase):
+    @patch('django.db.models.Model.clean')
+    def test_no_clean_on_validate(self, mock_clean):
+        class NoValidationModel(ValidationMixin, BaseCleanFieldsModel):
+            clean_on_validate = False
+
+        dummy = NoValidationModel()
+        with patch.object(dummy, 'clean_single_fields') as mock_clean_fields:
+            dummy.clean()
+        mock_clean_fields.assert_not_called()
+        mock_clean.assert_called_once_with()
+
+    def test_clean_on_validate(self):
+        class ValidationModel(ValidationMixin, BaseCleanFieldsModel):
+            clean_on_validate = True
+
+        dummy = ValidationModel()
+        with patch.object(dummy, 'clean_single_fields') as mock_clean_fields:
+            with patch('django.db.models.Model.clean') as mock_clean:
+                dummy.clean()
+        mock_clean_fields.assert_called_once_with()
+        mock_clean.assert_called_once_with()
 
 
 class CleanFieldsModelTestCase(TestCase):
